@@ -12,4 +12,14 @@ canvas {
 	position:absolute;
 	top:0;
 	left:0;
+	opacity:1;
+	animation:fade-in 1s linear;
+}
+@keyframes fade-in {
+	0% {
+		opacity:0;
+	}
+	100% {
+		opacity:1;
+	}
 }

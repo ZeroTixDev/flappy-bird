@@ -16,21 +16,29 @@ module.exports = class Game {
       this.score = 0;
       this.controls = {
          32: 'up',
+         87: 'up',
+         38: 'up',
+         83: 'down',
+         40: 'down',
       };
+      this.deathPauseTime = 0.5;
+      this.paused = false;
+      this.lastTime = 0;
    }
    resize() {
       this.canvas.height = window.innerHeight;
       this.canvas.width = window.innerWidth;
    }
    restart() {
-      this.bird.die(this.canvas.height);
+      this.bird.respawn(this.canvas.height);
       this.score = 0;
       this.pipes = [];
+      this.paused = false;
    }
    start() {
       this.start = Date.now();
-      (function run() {
-         this.update();
+      (function run(time = 0) {
+         this.update(time);
          this.render();
          requestAnimationFrame(run.bind(this));
       }.bind(this)());
@@ -39,11 +47,13 @@ module.exports = class Game {
    }
    trackKeys({ keyCode, type, repeat }) {
       if (repeat) return;
-      if (this.controls[keyCode] !== undefined && type === 'keydown') {
-         this.bird.control(this.controls[keyCode]);
+      if (this.controls[keyCode] !== undefined) {
+         this.bird.control(this.controls[keyCode], type === 'keydown');
       }
    }
-   update() {
+   update(time) {
+      const delta = (time - this.lastTime) / 1000;
+      this.lastTime = time;
       const expectedTick = Math.ceil((Date.now() - this.start) * (this.updateRate / 1000));
       while (this.tick < expectedTick) {
          if (this.tick % 45 === 0) {
@@ -51,27 +61,28 @@ module.exports = class Game {
          }
          for (let i = this.pipes.length - 1; i >= 0; i--) {
             const pipe = this.pipes[i];
-            if (pipe.update(this.bird)) {
-               this.restart();
+            if (!this.paused) {
+               pipe.update();
+            }
+            if (pipe.collide(this.bird) && !this.paused) {
+               setTimeout(() => {
+                  this.restart();
+               }, this.deathPauseTime * 1000);
+               this.paused = true;
                break;
             }
-            if (this.bird.x + this.bird.size > pipe.x && !pipe.counted) {
+            if (this.bird.pastPipe(pipe) && !pipe.counted && !this.paused) {
                this.score++;
                pipe.counted = true;
             }
-            if (pipe.x < 0) {
+            if (pipe.offScreen && !this.paused) {
                this.pipes.splice(i, 1);
             }
          }
-         this.bird.update();
-         if (this.bird.y + this.bird.size / 2 > this.canvas.height) {
-            this.bird.y = this.canvas.height - this.bird.size / 2;
-         }
-         if (this.bird.y - this.bird.size / 2 < 0) {
-            this.bird.y = this.bird.size / 2;
-         }
+         this.bird.update(this.canvas.height, this.paused);
          this.tick++;
       }
+      this.bird.interpAngle(delta);
    }
    render() {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -80,7 +91,7 @@ module.exports = class Game {
          pipe.render(this.ctx);
       }
       this.ctx.fillStyle = 'white';
-      this.ctx.font = '70px Arial';
+      this.ctx.font = '40px Arial';
       this.ctx.fillText(this.score, this.canvas.width / 2, 50);
    }
 };
