@@ -1,5 +1,4 @@
 'use strict';
-
 module.exports = class Bird {
    constructor(x, y) {
       this.x = x;

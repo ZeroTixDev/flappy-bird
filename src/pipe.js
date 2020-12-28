@@ -1,16 +1,16 @@
 'use strict';
 
 module.exports = class Pipe {
-   constructor(x, y, height, width) {
+   constructor(x, y, height, width, speed) {
       this.x = x;
       this.y = y;
       this.height = height;
       this.width = width;
-      this.vel = 10;
+      this.vel = speed;
       this.counted = false;
    }
    render(ctx) {
-      ctx.fillStyle = 'gray';
+      ctx.fillStyle = '#e6002a';
       ctx.fillRect(this.x, this.y, this.width, this.height);
    }
    get offScreen() {
@@ -37,22 +37,16 @@ module.exports = class Pipe {
          (dx - this.width) * (dx - this.width) + (dy - this.height) * (dy - this.height) <=
          (bird.size / 2) * (bird.size / 2)
       );
-      /*return (
-         bird.x + bird.size > this.x &&
-         bird.x < this.x + this.width &&
-         bird.y + bird.size > this.y &&
-         bird.y < this.y + this.height
-      );*/
    }
    update() {
       this.x -= this.vel;
    }
-   static create(width, height) {
+   static create(width, height, speed) {
       if (Math.random() > 0.5) {
-         return new Pipe(width, 0, Math.random() * (height - 200), 50);
+         return new Pipe(width, 0, Math.random() * (height / 2 - 85), 50, speed);
       } else {
-         const pipeHeight = Math.random() * (height - 200);
-         return new Pipe(width, height - pipeHeight, pipeHeight, 50);
+         const pipeHeight = Math.random() * (height / 2 - 85);
+         return new Pipe(width, height - pipeHeight, pipeHeight, 50, speed);
       }
    }
 };

@@ -4,7 +4,7 @@ const Bird = require('./bird');
 const Pipe = require('./pipe');
 
 module.exports = class Game {
-   constructor({ updateRate = 60 }) {
+   constructor({ updateRate = 60, mode = 'easy' }) {
       this.canvas = document.createElement('canvas');
       this.ctx = this.canvas.getContext('2d');
       this.resize();
@@ -24,6 +24,24 @@ module.exports = class Game {
       this.deathPauseTime = 0.5;
       this.paused = false;
       this.lastTime = 0;
+      this.defaults = {
+         pipeSpeed: 10,
+         pipeSpawnRate: 60,
+      };
+      this.mode = mode;
+      if (this.mode === 'easy') {
+         this.defaults.pipeSpeed = 15;
+         this.defaults.pipeSpawnRate = this.updateRate * 0.75;
+      } else if (this.mode === 'hard') {
+         this.defaults.pipeSpeed = 20;
+         this.defaults.pipeSpawnRate = this.updateRate / 2;
+      } else if (this.mode === 'epic') {
+         this.defaults.pipeSpeed = 30;
+         this.defaults.pipeSpawnRate = 1;
+      }
+      this.pipeSpeed = this.defaults.pipeSpeed;
+      this.pipeSpawnRate = this.defaults.pipeSpawnRate;
+      this.speedSeconds = 4;
    }
    resize() {
       this.canvas.height = window.innerHeight;
@@ -34,10 +52,15 @@ module.exports = class Game {
       this.score = 0;
       this.pipes = [];
       this.paused = false;
+      for (const key of Object.keys(this.defaults)) {
+         this[key] = this.defaults[key];
+      }
    }
    start() {
-      this.start = Date.now();
       (function run(time = 0) {
+         if (time === 0) {
+            this.start = Date.now();
+         }
          this.update(time);
          this.render();
          requestAnimationFrame(run.bind(this));
@@ -56,8 +79,19 @@ module.exports = class Game {
       this.lastTime = time;
       const expectedTick = Math.ceil((Date.now() - this.start) * (this.updateRate / 1000));
       while (this.tick < expectedTick) {
-         if (this.tick % 45 === 0) {
-            this.pipes.push(Pipe.create(this.canvas.width * 2, this.canvas.height));
+         if (this.tick % (this.updateRate * this.speedSeconds) === 0 && this.mode !== 'epic') {
+            this.pipeSpawnRate =
+               this.pipeSpawnRate !== 10 && this.pipeSpawnRate > 5 ? this.pipeSpawnRate - 5 : this.pipeSpawnRate;
+            this.pipeSpeed++;
+            if (this.pipeSpeed > 20 && this.mode === 'easy') {
+               this.pipeSpeed = 20;
+            }
+            if (this.pipeSpeed > 30 && this.mode === 'hard') {
+               this.pipeSpeed = 30;
+            }
+         }
+         if (this.tick % this.pipeSpawnRate === 0) {
+            this.pipes.push(Pipe.create(this.canvas.width * 2, this.canvas.height, this.pipeSpeed));
          }
          for (let i = this.pipes.length - 1; i >= 0; i--) {
             const pipe = this.pipes[i];
