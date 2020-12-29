@@ -72,8 +72,3 @@ function startGame(mode) {
       background.play();
    }
 }
-/*
-const game = new Game({ updateRate: 60 });
-game.start();
-
-window.addEventListener('resize', game.resize); */

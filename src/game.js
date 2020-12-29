@@ -44,6 +44,9 @@ module.exports = class Game {
       this.speedSeconds = 4;
    }
    resize() {
+      if (!this.canvas) {
+         return;
+      }
       this.canvas.height = window.innerHeight;
       this.canvas.width = window.innerWidth;
    }
